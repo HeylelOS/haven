@@ -1,0 +1,4 @@
+#!/bin/sh
+
+printf 'Nothing to really ship here, but you can create a tar archive or whatever\n'
+

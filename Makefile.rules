@@ -1,0 +1,41 @@
+.PHONY: all clean
+all:
+$(OBJECTS)/hvn:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn/main.o: src/hvn/main.c $(OBJECTS)/hvn
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn: $(OBJECTS)/hvn/main.o
+	$(LD) $(LDFLAGS) $(HVNFLAGS) -o $@ $^
+$(OBJECTS)/hvn-cfgen:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.c $(OBJECTS)/hvn-cfgen
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-cfgen: $(OBJECTS)/hvn-cfgen/main.o
+	$(LD) $(LDFLAGS) $(HVN_CFGENFLAGS) -o $@ $^
+$(OBJECTS)/hvn-init:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-init/main.o: src/hvn-init/main.c $(OBJECTS)/hvn-init
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-init: $(OBJECTS)/hvn-init/main.o
+	$(LD) $(LDFLAGS) $(HVN_INITFLAGS) -o $@ $^
+$(OBJECTS)/hvn-mando:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-mando/main.o: src/hvn-mando/main.c $(OBJECTS)/hvn-mando
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-mando: $(OBJECTS)/hvn-mando/main.o
+	$(LD) $(LDFLAGS) $(HVN_MANDOFLAGS) -o $@ $^
+$(OBJECTS)/hvn-mkgen:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-mkgen/main.o: src/hvn-mkgen/main.c $(OBJECTS)/hvn-mkgen
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-mkgen: $(OBJECTS)/hvn-mkgen/main.o
+	$(LD) $(LDFLAGS) $(HVN_MKGENFLAGS) -o $@ $^
+$(OBJECTS)/hvn-pkgen:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-pkgen/main.o: src/hvn-pkgen/main.c $(OBJECTS)/hvn-pkgen
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-pkgen: $(OBJECTS)/hvn-pkgen/main.o
+	$(LD) $(LDFLAGS) $(HVN_PKGENFLAGS) -o $@ $^
+all: $(BINARIES)/hvn $(BINARIES)/hvn-cfgen $(BINARIES)/hvn-init $(BINARIES)/hvn-mando $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-pkgen
+clean:
+	rm -rf $(BINARIES)/* $(LIBRARIES)/* $(OBJECTS)/*
