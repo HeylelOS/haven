@@ -1,6 +1,3 @@
-#include <string>
-#include <filesystem>
-#include <iostream>
 #include <fstream>
 
 #include <hvn/hvn.h>
@@ -17,34 +14,112 @@ int status;
 
 struct {
 	const char *sources;
-	const char *objects;
-	const char *binaries;
-	const char *libraries;
-	const char *libraries_extension;
 	const char *output;
 } options = {
 	.sources = "src",
-	.objects = "$(OBJECTS)",
-	.binaries = "$(BINARIES)",
-	.libraries = "$(LIBRARIES)",
-	.libraries_extension = ".so",
 	.output = "Makefile.rules",
 };
 
-inline void
-write_target_rule(ofstream &makefile, filesystem::directory_entry const &entry) {
-	if(entry.is_directory()) {
-		makefile << "\t$(MKDIR) $@\n\n";
-	} else {
-		string const &extension(entry.path().extension());
+struct mkgen final : ofstream {
+	static constexpr char binaries[]  = "$(BINARIES)";
+	static constexpr char libraries[] = "$(LIBRARIES)";
+	static constexpr char objects[]   = "$(OBJECTS)";
 
-		if(extension == ".c") {
-			makefile << "\t$(CC) $(CFLAGS) -c -o $@ $<\n\n";
-		} else if(extension == ".cc" || extension == ".cpp") {
-			makefile << "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n\n";
+	mkgen(const char *filename) : ofstream(filename) {
+		*this << ".PHONY: first all clean\nfirst: all\n";
+	}
+
+	~mkgen(void) {
+		*this << "all:";
+
+		for(auto &name: this->_modules) {
+			*this << " ";
+			this->print_module(name);
+		}
+
+		*this << "\nclean:\n\trm -rf " << binaries << "/* " << libraries << "/* " << objects << "/*";
+	}
+
+	mkgen &
+	operator<<(module const &module) {
+		unordered_set<string> object_directories { module.name() };
+
+		for(auto &object : module.objects()) {
+			this->print_target(module.name());
+			*this << object.first << ": " << object.second << " ";
+
+			// Write object parent directory if exists
+			size_t const parent(object.first.rfind('/'));
+			if(parent != 0) {
+				*this << *object_directories.insert(module.name() + string(object.first, 0, parent)).first;
+			} else {
+				this->print_target(module.name());
+			}
+
+			*this << "\n";
+
+			this->print_source_rule(object.second);
+		}
+
+		// Make directories for each parent directory
+		for(auto &directory : object_directories) {
+			this->print_target(directory);
+
+			size_t const parent(directory.rfind('/'));
+			if(parent != string::npos) {
+				*this << ": ";
+				this->print_target(directory.substr(0, parent));
+				*this << "\n";
+			} else {
+				*this << ":\n";
+			}
+
+			*this << "\t$(MKDIR) $@\n";
+		}
+
+		this->print_module(module.name());
+		*this << ":";
+		for(auto &object : module.objects()) {
+			*this << " ";
+			this->print_target(module.name());
+			*this << object.first;
+		}
+		*this << "\n\t$(LD) $(LDFLAGS) $(" << module.macro() << ") -o $@ $^\n";
+
+		this->_modules.insert(module.name());
+
+		return *this;
+	}
+
+private:
+	unordered_set<string> _modules;
+
+	void
+	print_module(string const &name) {
+		if(name.find(module::libraries_prefix) == 0) {
+			*this << libraries << "/" << name << module::libraries_suffix;
+		} else {
+			*this << binaries << "/" << name;
 		}
 	}
-}
+
+	void
+	print_target(string const &target) {
+		*this << objects << "/" << target;
+	}
+
+	void
+	print_source_rule(string const &source) {
+		string const extension(source, source.rfind('.'));
+		// Every source file has an extension, no possible string::npos here
+
+		if(extension == ".c") {
+			*this << "\t$(CC) $(CFLAGS) -c -o $@ $<\n";
+		} else if(extension == ".cc" || extension == ".cpp") {
+			*this << "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n";
+		}
+	}
+};
 
 }
 
@@ -52,22 +127,10 @@ int
 main(int argc, char **argv) {
 	int c;
 
-	while((c = getopt(argc, argv, "S:O:B:L:l:o:")) != -1) {
+	while((c = getopt(argc, argv, "S:o:")) != -1) {
 		switch(c) {
 		case 'S':
 			hvn::options.sources = optarg;
-			break;
-		case 'O':
-			hvn::options.objects = optarg;
-			break;
-		case 'B':
-			hvn::options.binaries = optarg;
-			break;
-		case 'L':
-			hvn::options.libraries = optarg;
-			break;
-		case 'l':
-			hvn::options.libraries_extension = optarg;
 			break;
 		case 'o':
 			hvn::options.output = optarg;
@@ -75,81 +138,11 @@ main(int argc, char **argv) {
 		}
 	}
 
-	ofstream makefile(hvn::options.output, ofstream::out);
-	hvn::module binaries("bin", hvn::module::Folder);
-	hvn::module libraries("lib", hvn::module::Folder);
+	hvn::mkgen makefile(hvn::options.output);
 
-	makefile << ".PHONY: _all _clean all clean\n\nall: _all\nclean: _clean\n\n";
-
-	for(auto &module_entry : filesystem::directory_iterator(hvn::options.sources)) {
-		size_t const module_entry_path_length(module_entry.path().native().length());
-		hvn::module targets(hvn::module::create_from_entry(module_entry, false));
-
-		makefile << hvn::options.objects << "/" << targets.name() << ":\n";
-		hvn::write_target_rule(makefile, module_entry);
-
-		for(auto &source_entry : filesystem::recursive_directory_iterator(module_entry.path())) {
-			filesystem::path target(source_entry.path().native().substr(module_entry_path_length));
-
-			// Ignore hidden files
-			if(source_entry.path().filename().native().front() == '.') {
-				continue;
-			}
-
-			// Target and first dependency if a file
-			makefile << hvn::options.objects << "/" << targets.name();
-			if(!source_entry.is_directory()) {
-				makefile << target.replace_extension(".o").native() << ": " << source_entry.path().native();
-			} else {
-				makefile << target.native() << ":";
-			}
-
-			// Add target to targets list
-			targets.insert(target.native());
-
-			// Add parent directory of target
-			if(!target.empty()) {
-				makefile << " " << hvn::options.objects << "/" << targets.name()
-					<< target.remove_filename().native();
-			}
-
-			makefile << "\n";
-			hvn::write_target_rule(makefile, source_entry);
-		}
-
-		// Write target linking
-		if(!targets.empty()) {
-			// Executable or library target
-			switch(targets.type()) {
-			case hvn::module::Executable:
-				binaries.insert(targets.name());
-				makefile << hvn::options.binaries << "/" << targets.name();
-				break;
-			case hvn::module::Library:
-				libraries.insert(targets.name());
-				makefile << hvn::options.libraries << "/" << targets.name() << hvn::options.libraries_extension;
-				break;
-			default:
-				cerr << targets.name() << ": Unexpected module type\n";
-				continue;
-			}
-
-			// Per Module linking rule
-			makefile << ": ";
-			for(auto &target : targets) {
-				makefile << hvn::options.objects << "/" << targets.name() << target;
-			}
-			makefile << "\n\t$(LD) $(LDFLAGS) $(" << targets.macro() << ") -o $@ $^\n\n";
-		}
+	for(auto &entry : filesystem::directory_iterator(hvn::options.sources)) {
+		makefile << hvn::module(entry.path());
 	}
-
-	// _all rule
-	makefile << "_all:";
-	for(auto &binary : binaries) { makefile << " " << hvn::options.binaries << "/" << binary; }
-	for(auto &library : libraries) { makefile << " " << hvn::options.libraries << "/" << library << hvn::options.libraries_extension; }
-
-	// _clean rule
-	makefile << "\n_clean:\n\trm -rf $(wildcard $(BINARIES)/*) $(wildcard $(LIBRARIES)/*) $(wildcard $(OBJECTS)/*)\n\n";
 
 	return hvn::status;
 }

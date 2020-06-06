@@ -1,54 +1,35 @@
-.PHONY: _all _clean all clean
-
-all: _all
-clean: _clean
-
+.PHONY: first all clean
+first: all
+$(OBJECTS)/hvn/main.o: src/hvn/main.c $(OBJECTS)/hvn
+	$(CC) $(CFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn:
 	$(MKDIR) $@
-
-$(OBJECTS)/hvn/main.o: src/hvn/main.c $(OBJECTS)/hvn/
-	$(CC) $(CFLAGS) -c -o $@ $<
-
 $(BINARIES)/hvn: $(OBJECTS)/hvn/main.o
 	$(LD) $(LDFLAGS) $(HVNFLAGS) -o $@ $^
-
+$(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.cc $(OBJECTS)/hvn-cfgen
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-cfgen:
 	$(MKDIR) $@
-
-$(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.cc $(OBJECTS)/hvn-cfgen/
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 $(BINARIES)/hvn-cfgen: $(OBJECTS)/hvn-cfgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_CFGENFLAGS) -o $@ $^
-
-$(OBJECTS)/hvn-man:
-	$(MKDIR) $@
-
-$(OBJECTS)/hvn-man/main.o: src/hvn-man/main.c $(OBJECTS)/hvn-man/
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(BINARIES)/hvn-man: $(OBJECTS)/hvn-man/main.o
-	$(LD) $(LDFLAGS) $(HVN_MANFLAGS) -o $@ $^
-
+$(OBJECTS)/hvn-mkgen/main.o: src/hvn-mkgen/main.cc $(OBJECTS)/hvn-mkgen
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-mkgen:
 	$(MKDIR) $@
-
-$(OBJECTS)/hvn-mkgen/main.o: src/hvn-mkgen/main.cc $(OBJECTS)/hvn-mkgen/
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 $(BINARIES)/hvn-mkgen: $(OBJECTS)/hvn-mkgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_MKGENFLAGS) -o $@ $^
-
+$(OBJECTS)/hvn-mngen/main.o: src/hvn-mngen/main.c $(OBJECTS)/hvn-mngen
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(OBJECTS)/hvn-mngen:
+	$(MKDIR) $@
+$(BINARIES)/hvn-mngen: $(OBJECTS)/hvn-mngen/main.o
+	$(LD) $(LDFLAGS) $(HVN_MNGENFLAGS) -o $@ $^
+$(OBJECTS)/hvn-creat/main.o: src/hvn-creat/main.cc $(OBJECTS)/hvn-creat
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-creat:
 	$(MKDIR) $@
-
-$(OBJECTS)/hvn-creat/main.o: src/hvn-creat/main.cc $(OBJECTS)/hvn-creat/
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 $(BINARIES)/hvn-creat: $(OBJECTS)/hvn-creat/main.o
 	$(LD) $(LDFLAGS) $(HVN_CREATFLAGS) -o $@ $^
-
-_all: $(BINARIES)/hvn-creat $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-man $(BINARIES)/hvn-cfgen $(BINARIES)/hvn
-_clean:
-	rm -rf $(wildcard $(BINARIES)/*) $(wildcard $(LIBRARIES)/*) $(wildcard $(OBJECTS)/*)
-
+all: $(BINARIES)/hvn-mngen $(BINARIES)/hvn-creat $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-cfgen $(BINARIES)/hvn
+clean:
+	rm -rf $(BINARIES)/* $(LIBRARIES)/* $(OBJECTS)/*
