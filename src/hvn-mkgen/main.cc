@@ -1,9 +1,11 @@
 #include <fstream>
+#include <unordered_map>
 
 #include <hvn/hvn.h>
 
 extern "C" {
 #include <unistd.h>
+#include <string.h>
 }
 
 using namespace std;
@@ -13,6 +15,7 @@ namespace hvn {
 int status;
 
 struct {
+	unordered_map<string, unordered_set<string>> dependencies;
 	const char *sources;
 	const char *output;
 } options = {
@@ -77,12 +80,24 @@ struct mkgen final : ofstream {
 			*this << "\t$(MKDIR) $@\n";
 		}
 
+		// Make linking rule
 		this->print_module(module.name());
 		*this << ":";
+
+		// Linking all objects
 		for(auto &object : module.objects()) {
 			*this << " ";
 			this->print_target(module.name());
 			*this << object.first;
+		}
+
+		// Adding dependencies
+		auto dependency_list_iterator = hvn::options.dependencies.find(module.name());
+		if(dependency_list_iterator != hvn::options.dependencies.end()) {
+			for(auto &dependency : dependency_list_iterator->second) {
+				*this << " ";
+				this->print_module(dependency);
+			}
 		}
 		*this << "\n\t$(LD) $(LDFLAGS) $(" << module.macro() << ") -o $@ $^\n";
 
@@ -127,11 +142,32 @@ int
 main(int argc, char **argv) {
 	int c;
 
-	while((c = getopt(argc, argv, "S:o:")) != -1) {
+	while((c = getopt(argc, argv, "S:d:o:")) != -1) {
 		switch(c) {
 		case 'S':
 			hvn::options.sources = optarg;
 			break;
+		case 'd': {
+				const char *equal = strchr(optarg, '=');
+				if(equal != NULL) {
+					unordered_set<string> dependency_list;
+					const char *begin = equal + 1, *end;
+
+					while(end = strchr(begin, ','), end != NULL) {
+						if(*begin != '\0') {
+							dependency_list.emplace(begin, 0, end - begin);
+						}
+
+						begin = end + 1;
+					}
+
+					if(*begin != '\0') {
+						dependency_list.emplace(begin);
+					}
+
+					hvn::options.dependencies.insert_or_assign(string(optarg, equal - optarg), dependency_list);
+				}
+			} break;
 		case 'o':
 			hvn::options.output = optarg;
 			break;
