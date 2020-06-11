@@ -28,12 +28,12 @@ struct mkgen final : ofstream {
 	static constexpr char libraries[] = "$(LIBRARIES)";
 	static constexpr char objects[]   = "$(OBJECTS)";
 
-	mkgen(const char *filename) : ofstream(filename) {
-		*this << ".PHONY: first all clean\nfirst: all\n";
+	mkgen(const char *filename) : ofstream(filename, ios_base::out | ios_base::trunc) {
+		*this << ".PHONY: all clean _all\nall: _all\n";
 	}
 
 	~mkgen(void) {
-		*this << "all:";
+		*this << "_all:";
 
 		for(auto &name: this->_modules) {
 			*this << " ";
@@ -128,10 +128,15 @@ private:
 		string const extension(source, source.rfind('.'));
 		// Every source file has an extension, no possible string::npos here
 
-		if(extension == ".c") {
+		switch(language_with_extension(extension)) {
+		case C:
 			*this << "\t$(CC) $(CFLAGS) -c -o $@ $<\n";
-		} else if(extension == ".cc" || extension == ".cpp") {
+			break;
+		case CPP:
 			*this << "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n";
+			break;
+		default:
+			break;
 		}
 	}
 };

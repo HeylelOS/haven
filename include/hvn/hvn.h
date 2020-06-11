@@ -8,6 +8,43 @@
 
 namespace hvn {
 
+enum language {
+	Unknown,
+	C,
+	CPP,
+};
+
+language
+language_with_extension(std::string const &extension) {
+	static std::unordered_map<std::string, language> const extensions = {
+		{ ".c", C },
+		{ ".cc", CPP }, { ".cpp", CPP },
+	};
+	auto search = extensions.find(extension);
+
+	return search != extensions.end() ? search->second : Unknown;
+}
+
+constexpr struct {
+	const char *name;
+	const char *object_rule;
+	const char *hello_world;
+	const char *extension;
+} languages[] = {
+	{
+		.name = "C",
+		.object_rule = "\t$(CC) $(CFLAGS) -c -o $@ $<\n",
+		.hello_world = "#include <stdio.h>\n\nint\nmain(int argc, char **argv) {\n\n\tputs(\"Hello, World!\");\n\n\treturn 0;\n}\n\n",
+		.extension = ".c",
+	},
+	{
+		.name = "C++",
+		.object_rule = "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n",
+		.hello_world = "#include <iostream>\n\nint\nmain(int argc, char **argv) {\n\n\tstd::cout << \"Hello, World!\\n\";\n\n\treturn 0;\n}\n\n",
+		.extension = ".cc",
+	},
+};
+
 struct module final {
 	static constexpr char libraries_prefix[] = "lib";
 	static constexpr char libraries_suffix[] = ".so";
