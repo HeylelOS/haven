@@ -25,26 +25,6 @@ language_with_extension(std::string const &extension) {
 	return search != extensions.end() ? search->second : Unknown;
 }
 
-constexpr struct {
-	const char *name;
-	const char *object_rule;
-	const char *hello_world;
-	const char *extension;
-} languages[] = {
-	{
-		.name = "C",
-		.object_rule = "\t$(CC) $(CFLAGS) -c -o $@ $<\n",
-		.hello_world = "#include <stdio.h>\n\nint\nmain(int argc, char **argv) {\n\n\tputs(\"Hello, World!\");\n\n\treturn 0;\n}\n\n",
-		.extension = ".c",
-	},
-	{
-		.name = "C++",
-		.object_rule = "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n",
-		.hello_world = "#include <iostream>\n\nint\nmain(int argc, char **argv) {\n\n\tstd::cout << \"Hello, World!\\n\";\n\n\treturn 0;\n}\n\n",
-		.extension = ".cc",
-	},
-};
-
 struct module final {
 	static constexpr char libraries_prefix[] = "lib";
 	static constexpr char libraries_suffix[] = ".so";
@@ -61,7 +41,7 @@ struct module final {
 				continue;
 			}
 
-			this->_extensions.emplace(source, extension_position - sources_path_length);
+			this->_extensions.emplace(source, extension_position);
 			this->_objects.emplace(std::string(source, sources_path_length, extension_position - sources_path_length).append(objects_suffix),
 				source);
 		}

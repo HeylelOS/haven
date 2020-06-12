@@ -1,5 +1,5 @@
-.PHONY: all clean _all
-all: _all
+.PHONY: all clean
+all:
 $(OBJECTS)/hvn-init/main.o: src/hvn-init/main.cc $(OBJECTS)/hvn-init
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-init:
@@ -30,6 +30,6 @@ $(OBJECTS)/hvn-mkgen:
 	$(MKDIR) $@
 $(BINARIES)/hvn-mkgen: $(OBJECTS)/hvn-mkgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_MKGENFLAGS) -o $@ $^
-_all: $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-cfgen $(BINARIES)/hvn $(BINARIES)/hvn-mando $(BINARIES)/hvn-init
+all: $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-cfgen $(BINARIES)/hvn $(BINARIES)/hvn-mando $(BINARIES)/hvn-init
 clean:
 	rm -rf $(BINARIES)/* $(LIBRARIES)/* $(OBJECTS)/*

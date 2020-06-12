@@ -1,5 +1,4 @@
 #include <fstream>
-#include <unordered_map>
 
 #include <hvn/hvn.h>
 
@@ -29,11 +28,11 @@ struct mkgen final : ofstream {
 	static constexpr char objects[]   = "$(OBJECTS)";
 
 	mkgen(const char *filename) : ofstream(filename, ios_base::out | ios_base::trunc) {
-		*this << ".PHONY: all clean _all\nall: _all\n";
+		*this << ".PHONY: all clean\nall:\n";
 	}
 
 	~mkgen(void) {
-		*this << "_all:";
+		*this << "all:";
 
 		for(auto &name: this->_modules) {
 			*this << " ";
