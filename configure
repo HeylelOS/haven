@@ -125,7 +125,7 @@ printf 'Using linker flags '%s'\n' "${LDFLAGS}"
 [ -z "${HVN_MKGENFLAGS}" ] && HVN_MKGENFLAGS="${LIBCPP}"
 [ -z "${HVN_MANDOFLAGS}" ] && HVN_MANDOFLAGS="-lcmark"
 [ -z "${HVNFLAGS}" ] && HVNFLAGS=""
-[ -z "${HVN_INITFLAGS}" ] && HVN_INITFLAGS="${LIBCPP}"
+[ -z "${HVN_INITFLAGS}" ] && HVN_INITFLAGS=""
 
 [ -z "${BINARIES}" ] && BINARIES="build/bin"
 [ -z "${LIBRARIES}" ] && LIBRARIES="build/lib"

@@ -1,35 +1,35 @@
 .PHONY: all clean
 all:
-$(OBJECTS)/hvn-init/main.o: src/hvn-init/main.cc $(OBJECTS)/hvn-init
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(OBJECTS)/hvn-init:
-	$(MKDIR) $@
-$(BINARIES)/hvn-init: $(OBJECTS)/hvn-init/main.o
-	$(LD) $(LDFLAGS) $(HVN_INITFLAGS) -o $@ $^
-$(OBJECTS)/hvn-mando/main.o: src/hvn-mando/main.c $(OBJECTS)/hvn-mando
-	$(CC) $(CFLAGS) -c -o $@ $<
-$(OBJECTS)/hvn-mando:
-	$(MKDIR) $@
-$(BINARIES)/hvn-mando: $(OBJECTS)/hvn-mando/main.o
-	$(LD) $(LDFLAGS) $(HVN_MANDOFLAGS) -o $@ $^
-$(OBJECTS)/hvn/main.o: src/hvn/main.c $(OBJECTS)/hvn
-	$(CC) $(CFLAGS) -c -o $@ $<
-$(OBJECTS)/hvn:
-	$(MKDIR) $@
-$(BINARIES)/hvn: $(OBJECTS)/hvn/main.o
-	$(LD) $(LDFLAGS) $(HVNFLAGS) -o $@ $^
 $(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.cc $(OBJECTS)/hvn-cfgen
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-cfgen:
 	$(MKDIR) $@
 $(BINARIES)/hvn-cfgen: $(OBJECTS)/hvn-cfgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_CFGENFLAGS) -o $@ $^
+$(OBJECTS)/hvn/main.o: src/hvn/main.c $(OBJECTS)/hvn
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(OBJECTS)/hvn:
+	$(MKDIR) $@
+$(BINARIES)/hvn: $(OBJECTS)/hvn/main.o
+	$(LD) $(LDFLAGS) $(HVNFLAGS) -o $@ $^
+$(OBJECTS)/hvn-mando/main.o: src/hvn-mando/main.c $(OBJECTS)/hvn-mando
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(OBJECTS)/hvn-mando:
+	$(MKDIR) $@
+$(BINARIES)/hvn-mando: $(OBJECTS)/hvn-mando/main.o
+	$(LD) $(LDFLAGS) $(HVN_MANDOFLAGS) -o $@ $^
 $(OBJECTS)/hvn-mkgen/main.o: src/hvn-mkgen/main.cc $(OBJECTS)/hvn-mkgen
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-mkgen:
 	$(MKDIR) $@
 $(BINARIES)/hvn-mkgen: $(OBJECTS)/hvn-mkgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_MKGENFLAGS) -o $@ $^
-all: $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-cfgen $(BINARIES)/hvn $(BINARIES)/hvn-mando $(BINARIES)/hvn-init
+$(OBJECTS)/hvn-init/main.o: src/hvn-init/main.c $(OBJECTS)/hvn-init
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(OBJECTS)/hvn-init:
+	$(MKDIR) $@
+$(BINARIES)/hvn-init: $(OBJECTS)/hvn-init/main.o
+	$(LD) $(LDFLAGS) $(HVN_INITFLAGS) -o $@ $^
+all: $(BINARIES)/hvn-init $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-mando $(BINARIES)/hvn $(BINARIES)/hvn-cfgen
 clean:
 	rm -rf $(BINARIES)/* $(LIBRARIES)/* $(OBJECTS)/*
