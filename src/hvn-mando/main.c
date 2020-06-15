@@ -7,16 +7,12 @@
 #include <cmark.h>
 
 struct hvn_mando_args {
-	const char *output;
 	long pagesize;
 	int options;
-	int width;
 };
 
 static void
-hvn_mando_parse_file(const char *file,
-	cmark_parser *parser,
-	const struct hvn_mando_args *args) {
+hvn_mando_parse_file(const char *file, cmark_parser *parser, const struct hvn_mando_args *args) {
 	char buffer[args->pagesize];
 	int fd = open(file, O_RDONLY);
 	ssize_t readval;
@@ -29,26 +25,22 @@ hvn_mando_parse_file(const char *file,
 		cmark_parser_feed(parser, buffer, readval);
 	}
 
+	if(readval < 0) {
+		warn("read %s", file);
+	}
+
 	close(fd);
 }
 
-static FILE *
-xfopen(const char *filename, const char *mode) {
-	FILE *file = fopen(filename, mode);
+static void
+hvn_mando_print_document(const char *filename, cmark_node *document, const struct hvn_mando_args *args) {
+	cmark_iter *iterator = cmark_iter_new(document);
+	FILE *output = fopen(filename, "w");
+	cmark_event_type event;
 
-	if(file == NULL) {
+	if(output == NULL) {
 		err(EXIT_FAILURE, "fopen %s", filename);
 	}
-
-	return file;
-}
-
-static void
-hvn_mando_print_document(cmark_node *document,
-	const struct hvn_mando_args *args) {
-	FILE *output = xfopen(args->output, "w");
-	cmark_iter *iterator = cmark_iter_new(document);
-	cmark_event_type event;
 
 	while((event = cmark_iter_next(iterator)) != CMARK_EVENT_DONE) {
 		cmark_node *current = cmark_iter_get_node(iterator);
@@ -82,25 +74,19 @@ hvn_mando_print_document(cmark_node *document,
 
 static void
 hvn_mando_usage(const char *hvnmandoname) {
-	fprintf(stderr, "usage: %s -o output input...\n", hvnmandoname);
+	fprintf(stderr, "usage: %s output input...\n", hvnmandoname);
 	exit(EXIT_FAILURE);
 }
 
 static const struct hvn_mando_args
 hvn_mando_parse_args(int argc, char **argv) {
 	struct hvn_mando_args args = {
-		.output = NULL,
 		.options = CMARK_OPT_DEFAULT,
-		.width = 0
 	};
-	long pagesize;
 	int c;
 
-	while((c = getopt(argc, argv, ":o:")) != -1) {
+	while((c = getopt(argc, argv, ":")) != -1) {
 		switch(c) {
-		case 'o':
-			args.output = optarg;
-			break;
 		case ':':
 			warnx("-%c: Missing argument", optopt);
 			hvn_mando_usage(*argv);
@@ -110,17 +96,17 @@ hvn_mando_parse_args(int argc, char **argv) {
 		}
 	}
 
-	if((pagesize = sysconf(_SC_PAGESIZE)) < 0) {
+	args.pagesize = sysconf(_SC_PAGESIZE);
+	if(args.pagesize < 0) {
 		errx(EXIT_FAILURE, "sysconf(_SC_PAGESIZE)");
 	}
-	args.pagesize = pagesize;
 
-	if(args.output == NULL) {
+	if(argc == optind) {
 		warnx("Output file not specified");
 		hvn_mando_usage(*argv);
 	}
 
-	if(argc == optind) {
+	if(argc - optind < 2) {
 		warnx("Missing input file(s)");
 		hvn_mando_usage(*argv);
 	}
@@ -133,17 +119,17 @@ main(int argc, char **argv) {
 	const struct hvn_mando_args args = hvn_mando_parse_args(argc, argv);
 	char **current = argv + optind, ** const argend = argv + argc;
 	cmark_parser *parser = cmark_parser_new(args.options);
+	const char *filename = *current;
 	cmark_node *document;
 
-	while(current != argend) {
+	while(++current != argend) {
 		hvn_mando_parse_file(*current, parser, &args);
-		current++;
 	}
 
 	document = cmark_parser_finish(parser);
 	cmark_parser_free(parser);
 
-	hvn_mando_print_document(document, &args);
+	hvn_mando_print_document(filename, document, &args);
 
 	cmark_node_free(document);
 

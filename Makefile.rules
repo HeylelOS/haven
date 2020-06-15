@@ -1,7 +1,7 @@
 .PHONY: all clean
 all:
-$(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.cc $(OBJECTS)/hvn-cfgen
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(OBJECTS)/hvn-cfgen/main.o: src/hvn-cfgen/main.c $(OBJECTS)/hvn-cfgen
+	$(CC) $(CFLAGS) -c -o $@ $<
 $(OBJECTS)/hvn-cfgen:
 	$(MKDIR) $@
 $(BINARIES)/hvn-cfgen: $(OBJECTS)/hvn-cfgen/main.o

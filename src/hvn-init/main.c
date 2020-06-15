@@ -71,7 +71,7 @@ hvn_init_module(const char *modulename, const char *extension) {
 
 static void
 hvn_init_usage(const char *hvninitname) {
-	fprintf(stderr, "usage: %s <targets>...\n", hvninitname);
+	fprintf(stderr, "usage: %s [-S sources] [-e extension] targets...\n", hvninitname);
 	exit(EXIT_FAILURE);
 }
 
