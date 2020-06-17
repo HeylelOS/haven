@@ -163,6 +163,8 @@ hvn_cfgen_print_macros(DIR *modules, FILE *output, void (*print)(const char *, F
 			char macro[length + sizeof(macrosuffix)];
 			char *uppercase = macro;
 
+			/* Generate a 'macro' associated to each module in sources, basically uppercased
+			   with non alnum's characters replaced by underscores, with FLAGS appended to it */
 			strncpy(uppercase, entry->d_name, length);
 			while(length != 0) {
 				char const character = *uppercase;
@@ -250,6 +252,7 @@ main(int argc, char **argv) {
 	DIR *modules;
 	FILE *output;
 
+	/* Begin, open up and stuff */
 	modules = opendir(args.sources);
 	if(modules == NULL) {
 		err(EXIT_FAILURE, "opendir %s", filename);
@@ -260,6 +263,7 @@ main(int argc, char **argv) {
 		err(EXIT_FAILURE, "fopen %s", filename);
 	}
 
+	/* Beginning of the script, handle command line arguments, and show supported flags */
 	fputs(INTRO_BEGIN, output);
 
 	if(args.hasC == 1) {
@@ -274,6 +278,7 @@ main(int argc, char **argv) {
 
 	fputs(INTRO_END, output);
 
+	/* Configuration part, we look up for tools in the system */
 	if(args.hasC == 1) {
 		fputs(SEARCH_TOOL_AND_FLAGS("C compiler", "CC", "CFLAGS", SEARCH_CC, FLAGS_D_CC, FLAGS_R_CC), output);
 	}
@@ -291,6 +296,7 @@ main(int argc, char **argv) {
 	rewinddir(modules);
 	hvn_cfgen_print_macros(modules, output, hvn_cfgen_search_print_macro);
 
+	/* Last part, we redact the head of the configure-generated Makefile */
 	fputs(OUTRO_BEGIN, output);
 
 	if(args.hasC == 1) {
@@ -308,6 +314,7 @@ main(int argc, char **argv) {
 
 	fputs(OUTRO_END, output);
 
+	/* End, clean up and stuff */
 	fclose(output);
 
 	closedir(modules);
