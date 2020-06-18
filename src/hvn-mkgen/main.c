@@ -46,26 +46,6 @@ static const struct hvn_mkgen_extension_rule {
 static const char macrosuffix[] = "FLAGS";
 
 static void
-hvn_mkgen_macro_fill(char *macro, const char *name, size_t namelen) {
-	strncpy(macro, name, namelen);
-	while(namelen != 0) {
-		char const character = *macro;
-
-		if(isalpha(character)) {
-			*macro = character - 'a' + 'A';
-		} else if(isdigit(character)) {
-			*macro = character;
-		} else {
-			*macro = '_';
-		}
-
-		++macro;
-		--namelen;
-	}
-	stpncpy(macro, macrosuffix, sizeof(macrosuffix));
-}
-
-static void
 hvn_mkgen_array_append(struct hvn_mkgen_array **arrayp, void *data) {
 	struct hvn_mkgen_array *array = *arrayp;
 
@@ -93,6 +73,18 @@ hvn_mkgen_array_append(struct hvn_mkgen_array **arrayp, void *data) {
 	}
 
 	*arrayp = array;
+}
+
+static void
+hvn_mkgen_array_free_all(struct hvn_mkgen_array *array) {
+	void **current = ARRAY_BEGIN(array), ** const end = ARRAY_END(array);
+
+	while(current != end) {
+		free(*current);
+		++current;
+	}
+
+	free(array);
 }
 
 static void
@@ -150,6 +142,31 @@ hvn_mkgen_print_rule_extension(const char *extension, FILE *output) {
 }
 
 static void
+hvn_mkgen_macro_fill(char *macro, const char *name, size_t namelen) {
+	strncpy(macro, name, namelen);
+	while(namelen != 0) {
+		char const character = *macro;
+
+		if(isalpha(character)) {
+			*macro = character - 'a' + 'A';
+		} else if(isdigit(character)) {
+			*macro = character;
+		} else {
+			*macro = '_';
+		}
+
+		++macro;
+		--namelen;
+	}
+	stpncpy(macro, macrosuffix, sizeof(macrosuffix));
+}
+
+static int
+hvn_mkgen_fts_compar(const FTSENT **lhs, const FTSENT **rhs) {
+	return strcmp((*lhs)->fts_name, (*rhs)->fts_name);
+}
+
+static void
 hvn_mkgen_print_module_rules(const char *name, FILE *output,
 	size_t sourceslen, const struct hvn_mkgen_args *args) {
 	size_t const namelen = strlen(name);
@@ -159,7 +176,7 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 	*stpncpy(path, args->sources, sourceslen) = '/';
 	stpncpy(path + sourceslen + 1, name, namelen + 1);
 
-	FTS *ftsp = fts_open(paths, FTS_LOGICAL, NULL);
+	FTS *ftsp = fts_open(paths, FTS_LOGICAL, hvn_mkgen_fts_compar);
 	if(ftsp != NULL) {
 		struct hvn_mkgen_array *objects = NULL;
 		FTSENT *ftsentp;
@@ -212,7 +229,6 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 
 			while(current != end) {
 				fprintf(output, " " TARGET_OBJ "%s", *current);
-				free(*current);
 				++current;
 			}
 
@@ -221,12 +237,13 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 			}
 
 			fprintf(output, "\n\t$(LD) $(LDFLAGS) $(%s) -o $@ $^\n", macro);
+
+			hvn_mkgen_array_free_all(objects);
 		} else {
 			warnx("No objects for module %s", name);
 		}
 
 		fts_close(ftsp);
-		free(objects);
 	} else {
 		warn("fts_open %s", path);
 	}
@@ -271,18 +288,54 @@ hvn_mkgen_parse_args(int argc, char **argv) {
 	return args;
 }
 
+static int
+hvn_mkgen_string_compar(const void *lhs, const void *rhs) {
+	char * const *strp1 = lhs, * const *strp2 = rhs;
+
+	return strcmp(*strp1, *strp2);
+}
+
+static struct hvn_mkgen_array *
+hvn_mkgen_modules_array(const char *sources) {
+	struct hvn_mkgen_array *array = NULL;
+	DIR *modules = opendir(sources);
+	struct dirent *entry;
+
+	if(modules == NULL) {
+		err(EXIT_FAILURE, "opendir %s", sources);
+	}
+
+	while(entry = readdir(modules), entry != NULL) {
+		if(*entry->d_name != '.') {
+			char *name = strdup(entry->d_name);
+
+			if(name == NULL) {
+				err(EXIT_FAILURE, "strdup %s", entry->d_name);
+			}
+
+			hvn_mkgen_array_append(&array, name);
+		}
+	}
+
+	closedir(modules);
+
+	if(array != NULL) {
+		qsort(ARRAY_BEGIN(array), array->count, sizeof(const char *), hvn_mkgen_string_compar);
+	} else {
+		errx(EXIT_FAILURE, "No modules available");
+	}
+
+	return array;
+}
+
 int
 main(int argc, char **argv) {
 	const struct hvn_mkgen_args args = hvn_mkgen_parse_args(argc, argv);
+	struct hvn_mkgen_array *modules = hvn_mkgen_modules_array(args.sources);
+	const char **current = ARRAY_BEGIN(modules), ** const end = ARRAY_END(modules);
 	const char *filename = argc == optind ? "Makefile.rules" : argv[optind];
-	struct dirent *entry;
-	DIR *modules;
+	size_t const sourceslen = strlen(args.sources);
 	FILE *output;
-
-	modules = opendir(args.sources);
-	if(modules == NULL) {
-		err(EXIT_FAILURE, "opendir %s", filename);
-	}
 
 	output = fopen(filename, "w");
 	if(output == NULL) {
@@ -291,28 +344,25 @@ main(int argc, char **argv) {
 
 	fputs(".PHONY: all clean\nall:\n", output);
 
-	size_t const sourceslen = strlen(args.sources);
-	while(entry = readdir(modules), entry != NULL) {
-		if(*entry->d_name != '.') {
-			hvn_mkgen_print_module_rules(entry->d_name, output, sourceslen, &args);
-		}
+	while(current != end) {
+		hvn_mkgen_print_module_rules(*current, output, sourceslen, &args);
+		++current;
 	}
 
 	fputs("all:", output);
 
-	rewinddir(modules);
-	while(entry = readdir(modules), entry != NULL) {
-		if(*entry->d_name != '.') {
-			fputc(' ', output);
-			hvn_mkgen_print_module_target(entry->d_name, output);
-		}
+	current = ARRAY_BEGIN(modules);
+	while(current != end) {
+		fputc(' ', output);
+		hvn_mkgen_print_module_target(*current, output);
+		++current;
 	}
 
 	fputs("\nclean:\n\trm -rf " TARGET_BIN "/* " TARGET_LIB "/* " TARGET_OBJ "/*\n", output);
 
 	fclose(output);
 
-	closedir(modules);
+	hvn_mkgen_array_free_all(modules);
 
 	free(args.dependencies);
 

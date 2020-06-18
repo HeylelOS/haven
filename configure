@@ -28,14 +28,12 @@ Some influential environment variables:
   LD               linker to use.
   LDFLAGS          arguments to pass to the linker.
   CC               C compiler to use, default [clang gcc tcc cc].
-  CFLAGS           C compiler flags [-O -Wall -fPIC] when -r specified, [-g -Wall -fPIC] else.
-  CXX              C++ compiler to use, default [clang++ g++].
-  CXXFLAGS         C++ compiler flags [-O -Wall -fPIC -std=c++17 -fno-exceptions -Iinclude] when -r specified, [-g -Wall -fPIC -std=c++17 -fno-exceptions -Iinclude] else.
-  HVN_CFGENFLAGS
-  HVN_MKGENFLAGS
+  CFLAGS           C compiler flags [-O -Wall -fPIC -DNDEBUG] when -r specified, [-g -Wall -fPIC] else.
+  HVN_INITFLAGS
   HVN_MANDOFLAGS
   HVNFLAGS
-  HVN_INITFLAGS
+  HVN_CFGENFLAGS
+  HVN_MKGENFLAGS
 
 Use these variables to override the choices made by \`configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -53,14 +51,8 @@ shift $((OPTIND - 1))
 [ ! -z "$*" ] && export -- "$@"
 
 case "`uname -s`" in
-Darwin)
-	[ -z "${LIBCPP}" ] && LIBCPP='-lc++'
-	[ -z "${LDFLAGS}" ] && LDFLAGS='-lSystem'
-	;;
-Linux)
-	[ -z "${LIBCPP}" ] && LIBCPP='-lstdc++'
-	[ -z "${LDFLAGS}" ] && LDFLAGS='-lc'
-	;;
+Darwin) [ -z "${LDFLAGS}" ] && LDFLAGS='-lSystem' ;;
+Linux) [ -z "${LDFLAGS}" ] && LDFLAGS='-lc' ;;
 *) printf 'Unsupported operating system\n' && exit 1 ;;
 esac
 
@@ -80,31 +72,10 @@ if [ -z "${CFLAGS}" ]
 then
 	if [ -z "${NDEBUG}" ]
 	then CFLAGS='-g -Wall -fPIC'
-	else CFLAGS='-O -Wall -fPIC'
+	else CFLAGS='-O -Wall -fPIC -DNDEBUG'
 	fi
 fi
-printf "Using C flags '%s'\n" "${CFLAGS}"
-
-if [ -z "${CXX}" ]
-then
-	for CXX in clang++ g++
-	do command -v "${CXX}" && break
-	done
-fi
-
-if [ ! -z "${CXX}" ]
-then printf "Using C++ compiler '%s'\n" "${CXX}"
-else printf 'Unable to find C++ compiler\n' ; exit 1
-fi
-
-if [ -z "${CXXFLAGS}" ]
-then
-	if [ -z "${NDEBUG}" ]
-	then CXXFLAGS='-g -Wall -fPIC -std=c++17 -fno-exceptions -Iinclude'
-	else CXXFLAGS='-O -Wall -fPIC -std=c++17 -fno-exceptions -Iinclude'
-	fi
-fi
-printf "Using C++ flags '%s'\n" "${CXXFLAGS}"
+printf "Using C compiler flags '%s'\n" "${CFLAGS}"
 
 if [ -z "${MKDIR}" ]
 then
@@ -113,19 +84,28 @@ then
 	done
 fi
 
+if [ ! -z "${MKDIR}" ]
+then printf "Using mkdir '%s'\n" "${MKDIR}"
+else printf 'Unable to find mkdir\n' ; exit 1
+fi
+
 if [ -z "${LD}" ]
 then
 	for LD in ld gold
 	do command -v "${LD}" && break
 	done
 fi
-printf 'Using linker flags '%s'\n' "${LDFLAGS}"
 
-[ -z "${HVN_CFGENFLAGS}" ] && HVN_CFGENFLAGS="${LIBCPP}"
-[ -z "${HVN_MKGENFLAGS}" ] && HVN_MKGENFLAGS="${LIBCPP}"
+if [ ! -z "${LD}" ]
+then printf "Using linker '%s'\n" "${LD}"
+else printf 'Unable to find linker\n' ; exit 1
+fi
+
+[ -z "${HVN_INITFLAGS}" ] && HVN_INITFLAGS=""
 [ -z "${HVN_MANDOFLAGS}" ] && HVN_MANDOFLAGS="-lcmark"
 [ -z "${HVNFLAGS}" ] && HVNFLAGS=""
-[ -z "${HVN_INITFLAGS}" ] && HVN_INITFLAGS=""
+[ -z "${HVN_CFGENFLAGS}" ] && HVN_CFGENFLAGS=""
+[ -z "${HVN_MKGENFLAGS}" ] && HVN_MKGENFLAGS=""
 
 [ -z "${BINARIES}" ] && BINARIES="build/bin"
 [ -z "${LIBRARIES}" ] && LIBRARIES="build/lib"
@@ -142,13 +122,11 @@ LD=${LD}
 LDFLAGS=${LDFLAGS}
 CC=${CC}
 CFLAGS=${CFLAGS}
-CXX=${CXX}
-CXXFLAGS=${CXXFLAGS}
 
-HVN_CFGENFLAGS=${HVN_CFGENFLAGS}
-HVN_MKGENFLAGS=${HVN_MKGENFLAGS}
+HVN_INITFLAGS=${HVN_INITFLAGS}
 HVN_MANDOFLAGS=${HVN_MANDOFLAGS}
 HVNFLAGS=${HVNFLAGS}
-HVN_INITFLAGS=${HVN_INITFLAGS}
+HVN_CFGENFLAGS=${HVN_CFGENFLAGS}
+HVN_MKGENFLAGS=${HVN_MKGENFLAGS}
 
 EOF
