@@ -18,6 +18,8 @@
 
 #define LIBRARIES_SUFFIX ".so"
 
+#define TRUNCATED_DIRLEN(pathlen, sourceslen, namelen) ((int)((pathlen) - (sourceslen) - (namelen) - 1))
+
 struct hvn_mkgen_args {
 	const char *sources;
 	struct hvn_mkgen_array *dependencies;
@@ -164,27 +166,27 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 
 		while(ftsentp = fts_read(ftsp), ftsentp != NULL) {
 			if(*ftsentp->fts_name != '.') {
-				const char *source = ftsentp->fts_path + sourceslen;
+				const char *truncated = ftsentp->fts_path + sourceslen;
 				const char *extension;
 
 				switch(ftsentp->fts_info) {
 				case FTS_D:
 					if(ftsentp->fts_level == 0) {
-						fprintf(output, TARGET_OBJ "%s:\n", source);
+						fprintf(output, TARGET_OBJ "%s:\n", truncated);
 					} else {
 						fprintf(output, TARGET_OBJ "%s: " TARGET_OBJ "%*s\n",
-							source, (int)(ftsentp->fts_pathlen - sourceslen - ftsentp->fts_namelen), source);
+							truncated, TRUNCATED_DIRLEN(ftsentp->fts_pathlen, sourceslen, ftsentp->fts_namelen), truncated);
 					}
 					fputs("\t$(MKDIR) $@\n", output);
 					break;
 				case FTS_F:
-					extension = strrchr(source, '.');
+					extension = strrchr(truncated, '.');
 					if(extension != NULL && extension[1] != '\0') {
-						char *object = strndup(source, extension - source + 2);
-						object[extension - source + 1] = 'o';
+						char *object = strndup(truncated, extension - truncated + 2);
+						object[extension - truncated + 1] = 'o';
 
-						fprintf(output, TARGET_OBJ "%s: " TARGET_OBJ "%s " TARGET_OBJ "%.*s\n",
-							object, source, (int)(ftsentp->fts_pathlen - sourceslen - ftsentp->fts_namelen), source);
+						fprintf(output, TARGET_OBJ "%s: %s " TARGET_OBJ "%.*s\n",
+							object, ftsentp->fts_path, TRUNCATED_DIRLEN(ftsentp->fts_pathlen, sourceslen, ftsentp->fts_namelen), truncated);
 						hvn_mkgen_print_rule_extension(extension, output);
 						hvn_mkgen_array_append(&objects, object);
 					}
@@ -272,7 +274,7 @@ hvn_mkgen_parse_args(int argc, char **argv) {
 int
 main(int argc, char **argv) {
 	const struct hvn_mkgen_args args = hvn_mkgen_parse_args(argc, argv);
-	const char *filename = argc == optind ? "Makefile.rules.test" : argv[optind];
+	const char *filename = argc == optind ? "Makefile.rules" : argv[optind];
 	struct dirent *entry;
 	DIR *modules;
 	FILE *output;
