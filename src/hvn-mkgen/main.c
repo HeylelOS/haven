@@ -32,6 +32,7 @@ struct hvn_mkgen_array {
 };
 
 static const char rulec[] = "\t$(CC) $(CFLAGS) -c -o $@ $<\n";
+static const char ruleasm[] = "\t$(AS) $(ASFLAGS) -c -o $@ $<\n";
 static const char rulecxx[] = "\t$(CXX) $(CXXFLAGS) -c -o $@ $<\n";
 
 static const struct hvn_mkgen_extension_rule {
@@ -39,6 +40,7 @@ static const struct hvn_mkgen_extension_rule {
 	const char *rule;
 } extensionrules[] = {
 	{ ".c", rulec },
+	{ ".s", ruleasm },
 	{ ".cc", rulecxx },
 	{ ".cpp", rulecxx },
 };
@@ -125,8 +127,8 @@ hvn_mkgen_print_module_dependencies(const char *name, size_t namelen, const stru
 	}
 }
 
-static void
-hvn_mkgen_print_rule_extension(const char *extension, FILE *output) {
+static const char *
+hvn_mkgen_rule_extension(const char *extension) {
 	const struct hvn_mkgen_extension_rule *current = extensionrules,
 		* const end = extensionrules + sizeof(extensionrules) / sizeof(*extensionrules);
 
@@ -134,11 +136,7 @@ hvn_mkgen_print_rule_extension(const char *extension, FILE *output) {
 		++current;
 	}
 
-	if(current != end) {
-		fputs(current->rule, output);
-	} else {
-		warnx("No rule for files with extension %s", extension);
-	}
+	return current != end ? current->rule : NULL;
 }
 
 static void
@@ -200,12 +198,16 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 					extension = strrchr(truncated, '.');
 					if(extension != NULL && extension[1] != '\0') {
 						char *object = strndup(truncated, extension - truncated + 2);
+						const char *rule = hvn_mkgen_rule_extension(extension);
 						object[extension - truncated + 1] = 'o';
 
-						fprintf(output, TARGET_OBJ "%s: %s " TARGET_OBJ "%.*s\n",
-							object, ftsentp->fts_path, TRUNCATED_DIRLEN(ftsentp->fts_pathlen, sourceslen, ftsentp->fts_namelen), truncated);
-						hvn_mkgen_print_rule_extension(extension, output);
-						hvn_mkgen_array_append(&objects, object);
+						if(rule != NULL) {
+							fprintf(output, TARGET_OBJ "%s: %s " TARGET_OBJ "%.*s\n%s",
+								object, ftsentp->fts_path,
+								TRUNCATED_DIRLEN(ftsentp->fts_pathlen, sourceslen, ftsentp->fts_namelen), truncated,
+								rule);
+							hvn_mkgen_array_append(&objects, object);
+						}
 					}
 					break;
 				case FTS_DNR:
