@@ -106,11 +106,11 @@ hvn_mkgen_print_module_dependencies(const char *name, size_t namelen, const stru
 		const char *list = *current;
 		const char *equal = strchr(list, '=');
 
-		if(equal != NULL && namelen == equal - list && strncmp(name, list, equal - list)) {
+		if(equal != NULL && namelen == equal - list && strncmp(name, list, namelen) == 0) {
 			const char *current = equal + 1;
 			const char *comma;
 
-			while(*current != '\0' && (comma = strchr(current, ',')) != NULL) {
+			while(comma = strchr(current, ','), comma != NULL) {
 				size_t dependencylen = comma - current;
 				char dependency[dependencylen + 1];
 				strncpy(dependency, current, dependencylen);
@@ -120,6 +120,11 @@ hvn_mkgen_print_module_dependencies(const char *name, size_t namelen, const stru
 				hvn_mkgen_print_module_target(dependency, output);
 
 				current = comma + 1;
+			}
+
+			if(*current != '\0') {
+				fputc(' ', output);
+				hvn_mkgen_print_module_target(current, output);
 			}
 		}
 
