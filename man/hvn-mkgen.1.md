@@ -1,4 +1,4 @@
-# hvn-init 1 2020-06-25 HeylelOS
+# hvn-mkgen 1 2020-06-25 HeylelOS
 
 ## NAME
 Create Makefile rules.
