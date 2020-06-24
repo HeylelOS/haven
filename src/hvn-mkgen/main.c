@@ -194,10 +194,10 @@ hvn_mkgen_print_module_rules(const char *name, FILE *output,
 					if(ftsentp->fts_level == 0) {
 						fprintf(output, TARGET_OBJ "%s:\n", truncated);
 					} else {
-						fprintf(output, TARGET_OBJ "%s: " TARGET_OBJ "%*s\n",
+						fprintf(output, TARGET_OBJ "%s: " TARGET_OBJ "%.*s\n",
 							truncated, TRUNCATED_DIRLEN(ftsentp->fts_pathlen, sourceslen, ftsentp->fts_namelen), truncated);
 					}
-					fputs("\t$(MKDIR) $@\n", output);
+					fputs("\t$(MKDIR) -p $@\n", output);
 					break;
 				case FTS_F:
 					extension = strrchr(truncated, '.');
