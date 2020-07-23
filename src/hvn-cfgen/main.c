@@ -17,10 +17,14 @@
 #define SEARCH_MKDIR "mkdir"
 #define SEARCH_LD    "ld gold"
 #define SEARCH_CC    "clang gcc tcc cc"
+#define SEARCH_AS    "as gas "SEARCH_CC
 #define SEARCH_CXX   "clang++ g++"
 
 #define FLAGS_D_CC "-g -Wall -fPIC"
 #define FLAGS_R_CC "-O -Wall -fPIC -DNDEBUG"
+
+#define FLAGS_D_AS ""
+#define FLAGS_R_AS ""
 
 #define FLAGS_D_CXX "-g -Wall -fPIC -std=c++11"
 #define FLAGS_R_CXX "-O -Wall -fPIC -std=c++11 -DNDEBUG"
@@ -59,6 +63,10 @@
 #define INTRO_HAS_C \
 	"  CC               C compiler to use, default [" SEARCH_CC "].\n" \
 	"  CFLAGS           C compiler flags [" FLAGS_R_CC "] when -r specified, [" FLAGS_D_CC "] else.\n"
+
+#define INTRO_HAS_ASM \
+	"  AS               Assembly compiler to use, default [" SEARCH_AS "].\n" \
+	"  ASFLAGS          Assembly compiler flags [" FLAGS_R_AS "] when -r specified, [" FLAGS_D_AS "] else.\n"
 
 #define INTRO_HAS_CXX \
 	"  CXX              C compiler to use, default [" SEARCH_CXX "].\n" \
@@ -141,6 +149,7 @@
 struct hvn_cfgen_args {
 	const char *sources;
 	unsigned hasC : 1;
+	unsigned hasAsm : 1;
 	unsigned hasCXX : 1;
 };
 
@@ -205,7 +214,8 @@ hvn_cfgen_parse_args(int argc, char **argv) {
 	struct hvn_cfgen_args args = {
 		.sources = "src",
 		.hasC = 0,
-		.hasCXX= 0,
+		.hasAsm = 0,
+		.hasCXX = 0,
 	};
 	char *next;
 	int c;
@@ -224,6 +234,11 @@ hvn_cfgen_parse_args(int argc, char **argv) {
 
 				if(strcasecmp("C", language) == 0) {
 					args.hasC = 1;
+					continue;
+				}
+
+				if(strcasecmp("ASM", language) == 0) {
+					args.hasAsm = 1;
 					continue;
 				}
 
@@ -277,6 +292,10 @@ main(int argc, char **argv) {
 		fputs(INTRO_HAS_C, output);
 	}
 
+	if(args.hasAsm == 1) {
+		fputs(INTRO_HAS_ASM, output);
+	}
+
 	if(args.hasCXX == 1) {
 		fputs(INTRO_HAS_CXX, output);
 	}
@@ -288,6 +307,10 @@ main(int argc, char **argv) {
 	/* Configuration part, we look up for tools in the system */
 	if(args.hasC == 1) {
 		fputs(SEARCH_TOOL_AND_FLAGS("C compiler", "CC", "CFLAGS", SEARCH_CC, FLAGS_D_CC, FLAGS_R_CC), output);
+	}
+
+	if(args.hasAsm == 1) {
+		fputs(SEARCH_TOOL_AND_FLAGS("Assembly compiler", "AS", "ASFLAGS", SEARCH_AS, FLAGS_D_AS, FLAGS_R_AS), output);
 	}
 
 	if(args.hasCXX == 1) {
@@ -308,6 +331,10 @@ main(int argc, char **argv) {
 
 	if(args.hasC == 1) {
 		fputs(OUTRO_MACRO("CC") OUTRO_MACRO("CFLAGS"), output);
+	}
+
+	if(args.hasAsm == 1) {
+		fputs(OUTRO_MACRO("AS") OUTRO_MACRO("ASFLAGS"), output);
 	}
 
 	if(args.hasCXX == 1) {
