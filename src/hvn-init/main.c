@@ -64,7 +64,7 @@ hvn_init_module(const char *modulename, const char *extension) {
 		char mainpath[modulenamelength + extensionlength + 6];
 
 		*stpncpy(mainpath, modulename, modulenamelength) = '/';
-		stpncpy(stpncpy(mainpath + modulenamelength + 1, "main", 4), extension, extensionlength);
+		*stpncpy(stpncpy(mainpath + modulenamelength + 1, "main", 4), extension, extensionlength) = '\0';
 
 		FILE *main = fopen(mainpath, "w");
 		if(main != NULL) {
