@@ -19,5 +19,5 @@ Each module is either considered a library or an executable, depending on whethe
 Valentin Debon (valentin.debon@heylelos.org)
 
 ## SEE ALSO
-hvn(1), hvn-cfgen(1), hvn-init(1), hvn-mando(1).
+hvn(1), hvn-cfgen(1), hvn-init(1), hvn-mando(1), hvn-pkgen(1).
 

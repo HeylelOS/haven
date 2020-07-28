@@ -18,5 +18,5 @@ Create a subdirectory for each target in sources. And creates a hello world if i
 Valentin Debon (valentin.debon@heylelos.org)
 
 ## SEE ALSO
-hvn(1), hvn-cfgen(1), hvn-mkgen(1), hvn-mando(1).
+hvn(1), hvn-cfgen(1), hvn-mkgen(1), hvn-mando(1), hvn-pkgen(1).
 

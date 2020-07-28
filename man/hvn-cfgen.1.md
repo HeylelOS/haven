@@ -18,5 +18,5 @@ Generate a configure script suitable to create a Makefile for hvn-based Makefile
 Valentin Debon (valentin.debon@heylelos.org)
 
 ## SEE ALSO
-hvn(1), hvn-init(1), hvn-mkgen(1), hvn-mando(1).
+hvn(1), hvn-init(1), hvn-mkgen(1), hvn-mando(1), hvn-pkgen(1).
 

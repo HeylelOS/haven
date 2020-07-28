@@ -17,5 +17,5 @@ Front end to others hvn subcommands. It will execute the command as if the first
 Valentin Debon (valentin.debon@heylelos.org)
 
 ## SEE ALSO
-hvn-init(1), hvn-cfgen(1), hvn-mkgen(1), hvn-mando(1).
+hvn-init(1), hvn-cfgen(1), hvn-mkgen(1), hvn-mando(1), hvn-pkgen(1).
 

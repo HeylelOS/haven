@@ -17,5 +17,5 @@ Ease creation of manpages by redacting them in markdown, and then format in roff
 Valentin Debon (valentin.debon@heylelos.org)
 
 ## SEE ALSO
-hvn(1), hvn-init(1), hvn-cfgen(1), hvn-mkgen(1), man(1).
+hvn(1), hvn-init(1), hvn-cfgen(1), hvn-mkgen(1), hvn-pkgen(1), man(1).
 
