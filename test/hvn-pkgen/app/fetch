@@ -1,0 +1,21 @@
+#!/bin/sh
+
+printf 'Fetching test for hvn-pkgen (creating hello world source)\n'
+
+# You usually clone from a git or svn repo here
+if [ ! -f hello.c ]
+then
+	cat > hello.c <<EOF
+#include <stdio.h>
+
+int
+main(void) {
+
+	puts("Hello, World!");
+
+	return 0;
+}
+
+EOF
+fi
+

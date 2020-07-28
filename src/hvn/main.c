@@ -2,7 +2,7 @@
 	main.c
 	Copyright (c) 2020, Valentin Debon
 
-	This file is part of the honey package manager
+	This file is part of the heaven repository
 	subject the BSD 3-Clause License, see LICENSE
 */
 #include <stdio.h>

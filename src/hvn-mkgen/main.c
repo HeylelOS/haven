@@ -2,7 +2,7 @@
 	main.c
 	Copyright (c) 2020, Valentin Debon
 
-	This file is part of the honey package manager
+	This file is part of the heaven repository
 	subject the BSD 3-Clause License, see LICENSE
 */
 #include <stdio.h>
@@ -295,7 +295,7 @@ hvn_mkgen_parse_args(int argc, char **argv) {
 	}
 
 	if(argc - optind > 1) {
-		warnx("Too much output files");
+		warnx("Too many output files");
 		hvn_mkgen_usage(*argv);
 	}
 

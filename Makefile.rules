@@ -30,6 +30,12 @@ $(OBJECTS)/hvn-mkgen/main.o: src/hvn-mkgen/main.c $(OBJECTS)/hvn-mkgen
 	$(CC) $(CFLAGS) -c -o $@ $<
 $(BINARIES)/hvn-mkgen: $(OBJECTS)/hvn-mkgen/main.o
 	$(LD) $(LDFLAGS) $(HVN_MKGENFLAGS) -o $@ $^
-all: $(BINARIES)/hvn $(BINARIES)/hvn-cfgen $(BINARIES)/hvn-init $(BINARIES)/hvn-mando $(BINARIES)/hvn-mkgen
+$(OBJECTS)/hvn-pkgen:
+	$(MKDIR) -p $@
+$(OBJECTS)/hvn-pkgen/main.o: src/hvn-pkgen/main.c $(OBJECTS)/hvn-pkgen
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BINARIES)/hvn-pkgen: $(OBJECTS)/hvn-pkgen/main.o
+	$(LD) $(LDFLAGS) $(HVN_PKGENFLAGS) -o $@ $^
+all: $(BINARIES)/hvn $(BINARIES)/hvn-cfgen $(BINARIES)/hvn-init $(BINARIES)/hvn-mando $(BINARIES)/hvn-mkgen $(BINARIES)/hvn-pkgen
 clean:
 	rm -rf $(BINARIES)/* $(LIBRARIES)/* $(OBJECTS)/*
