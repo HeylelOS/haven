@@ -20,8 +20,8 @@
 #include <err.h>
 
 struct hvn_pkgen_args {
-	const char *app;
 	const char *log;
+	const char *app;
 	const char *data;
 	const char *toolchain;
 };
@@ -147,6 +147,11 @@ hvn_pkgen_mkroot(const char *path, const struct hvn_pkgen_args *args) {
 		return -1;
 	}
 
+	if(symlink("usr/lib", "/lib") != 0) {
+		warn("symlink /lib -> usr/lib");
+		return -1;
+	}
+
 	if(chdir("/data") != 0) {
 		warn("chdir %s", path);
 		return -1;
@@ -197,27 +202,27 @@ hvn_pkgen_environment(const char *path) {
 
 static void
 hvn_pkgen_usage(const char *hvnpkgenname) {
-	fprintf(stderr, "usage: %s [-a app] [-l log] [-d data] [-t toolchain] recipes...\n", hvnpkgenname);
+	fprintf(stderr, "usage: %s [-l log] -a app -d data -t toolchain recipes...\n", hvnpkgenname);
 	exit(EXIT_FAILURE);
 }
 
 static const struct hvn_pkgen_args
 hvn_pkgen_parse_args(int argc, char **argv) {
 	struct hvn_pkgen_args args = {
-		.app = NULL,
 		.log = NULL,
+		.app = NULL,
 		.data = NULL,
 		.toolchain = NULL,
 	};
 	int c;
 
-	while((c = getopt(argc, argv, ":a:l:d:t:")) != -1) {
+	while((c = getopt(argc, argv, ":l:a:d:t:")) != -1) {
 		switch(c) {
-		case 'a':
-			args.app = optarg;
-			break;
 		case 'l':
 			args.log = optarg;
+			break;
+		case 'a':
+			args.app = optarg;
 			break;
 		case 'd':
 			args.data = optarg;
@@ -229,7 +234,7 @@ hvn_pkgen_parse_args(int argc, char **argv) {
 			warnx("-%c: Missing argument", optopt);
 			hvn_pkgen_usage(*argv);
 		default:
-			warnx("Unknown argument -%c", c);
+			warnx("Unknown argument -%c", optopt);
 			hvn_pkgen_usage(*argv);
 		}
 	}

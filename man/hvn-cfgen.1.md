@@ -11,8 +11,8 @@ Generate a configure script suitable to create a Makefile for hvn-based Makefile
 
 ## OPTIONS
 - -S : Sources, where to look up for modules.
-- -l : Comma separated list of builtin languages compilers to look for in the system. Supports C and C++.
-- filename : Name of the configure script to create, by default configure.
+- -l : Comma separated list of builtin languages compilers to look for in the system. Supports "C", "C++" and "asm", case insensitive.
+- filename : Name of the configure script to create, by default "configure".
 
 ## AUTHOR
 Valentin Debon (valentin.debon@heylelos.org)

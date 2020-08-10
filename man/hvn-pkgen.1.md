@@ -23,6 +23,7 @@ When a recipe is executed, it's environment is composed of the following hierarc
 - **/data** : Exported data, working directory of each ran recipes.
 - **/usr** : Read only binding to the specified toolchain directory.
 - **/bin** : Symbolic link to "usr/bin".
+- **/lib** : Symbolic link to "usr/lib".
 
 ## OPTIONS
 - -l log : Specify a surrogate stdout/stderr for the entire process.

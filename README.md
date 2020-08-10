@@ -8,6 +8,7 @@ It contains:
 - hvn-init : Add a new module to your sources, and creates a hello world if the language is supported.
 - hvn-mando : Create roff manpages from markdown. Requires libcmark.
 - hvn-mkgen : Create a Makefile.rules containing rules to create object files associated to filename's extensions.
+- hvn-pkgen : Execute a set of scripts inside an isolated environment.
 
 ## Why?
 
@@ -53,6 +54,12 @@ The compiler-driver linker will certainly do the job:
 
 Then, you can `make` your project and you execute rules based on objects derived from your source tree.
 Try not to name two potentials object with the same basename, as the `.o` prefix __replaces__ the source file one.
+
+Yet the only one exempted from examples is certainly the most powerful: `hvn-pkgen`.
+This utility is linux-specific and enables creating containers to create a standard environment for executing/building/packaging.
+The main goal is to fake an environment where each build are ran in userspace but hiding the system headers and interfaces.
+It allows the package builder to easily change a toolchain or build scripts for distribution.
+I'll let you read the manual pages to understand how you can use it. You're only limited by your imagination.
 
 ## Build
 

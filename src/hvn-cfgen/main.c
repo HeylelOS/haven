@@ -254,7 +254,7 @@ hvn_cfgen_parse_args(int argc, char **argv) {
 			warnx("-%c: Missing argument", optopt);
 			hvn_cfgen_usage(*argv);
 		default:
-			warnx("Unknown argument -%c", c);
+			warnx("Unknown argument -%c", optopt);
 			hvn_cfgen_usage(*argv);
 		}
 	}
