@@ -1,10 +1,4 @@
-/*
-	main.c
-	Copyright (c) 2019, Valentin Debon
-
-	This file is part of the haven repository
-	subject the BSD 3-Clause License, see LICENSE
-*/
+/* SPDX-License-Identifier: BSD-3-Clause */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
